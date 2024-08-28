@@ -1,0 +1,54 @@
+<!-- users/templates/users/register.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kayıt Ol</title>
+</head>
+<body>
+    <h2>Kayıt Ol</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        
+        <div>
+            <label for="id_first_name">Ad:</label>
+            {{ form.first_name }}
+            {{ form.first_name.errors }}
+        </div>
+        <div>
+            <label for="id_last_name">Soyad:</label>
+            {{ form.last_name }}
+            {{ form.last_name.errors }}
+        </div>
+        <div>
+            <label for="id_birth_date">Doğum Tarihi:</label>
+            {{ form.birth_date }}
+            {{ form.birth_date.errors }}
+        </div>
+        <div>
+            <label for="id_email">Email:</label>
+            {{ form.email }}
+            {{ form.email.errors }}
+        </div>
+        <div>
+            <label for="id_password1">Şifre:</label>
+            {{ form.password1 }}
+            {{ form.password1.errors }}
+            <small>Şifre aşağıdakileri içermelidir:</small>
+            <ul>
+                <li>En az 10 karakter</li>
+                <li>En az bir büyük harf (A-Z)</li>
+                <li>En az bir küçük harf (a-z)</li>
+                <li>En az bir rakam (0-9)</li>
+                <li>En az bir özel karakter (!@#$%^&*()-_=+)</li>
+            </ul>
+        </div>
+        <div>
+            <label for="id_password2">Şifre Tekrarı:</label>
+            {{ form.password2 }}
+            {{ form.password2.errors }}
+        </div>
+        <button type="submit">Kayıt Ol</button>
+    </form>
+</body>
+</html>

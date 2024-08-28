@@ -25,8 +25,7 @@ SECRET_KEY = 'django-insecure-2#35v7l9p&bohq8=@cv7h!ne0_-4vn@ldycij)rw8tw56$=%@n
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['10.0.0.25', 'localhost', '127.0.0.1']  # IP adreslerini ve localhost'u izin verilenler listesine ekledik
 
 # Application definition
 
@@ -42,11 +41,14 @@ INSTALLED_APPS = [
     'restaurants', # Restoranlar eklendi
     'graphene_django',  # Graphene-Django eklendi
     'django_filters',  # Django-Filter eklendi
+    'corsheaders',  # CORS Headers eklendi
+    'graphql_jwt',  # JWT Authentication eklendi
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # CORS Middleware eklendi
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -138,6 +140,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 GRAPHENE = {
     "SCHEMA": "yemeksepeti_clone.schema.schema",  # Schema dosyanızın yolu
     "MIDDLEWARE": [
+        "graphql_jwt.middleware.JSONWebTokenMiddleware",
         "graphene_django.debug.DjangoDebugMiddleware",
     ],
 }
+
+# JWT Ayarları
+AUTHENTICATION_BACKENDS = [
+    'graphql_jwt.backends.JSONWebTokenBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# CORS Ayarları
+CORS_ALLOW_ALL_ORIGINS = True  # Geliştirme sırasında tüm alan adlarına izin verilebilir

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Restaurant, MenuItem
+from .models import Restaurant, MenuItem, Category  # Category modelini de import ettik
 
 class MenuItemInline(admin.TabularInline):
     model = MenuItem
@@ -12,8 +12,14 @@ class RestaurantAdmin(admin.ModelAdmin):
     search_fields = ('name', 'address')
     inlines = [MenuItemInline]
 
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'restaurant')
+    list_filter = ('restaurant',)
+    search_fields = ('name',)
+
 @admin.register(MenuItem)
 class MenuItemAdmin(admin.ModelAdmin):
-    list_display = ('id', 'restaurant', 'name', 'price', 'createdAt', 'updatedAt')
-    list_filter = ('createdAt', 'updatedAt')
+    list_display = ('id', 'restaurant', 'category', 'name', 'price', 'createdAt', 'updatedAt')
+    list_filter = ('createdAt', 'updatedAt', 'category')
     search_fields = ('name', 'description')

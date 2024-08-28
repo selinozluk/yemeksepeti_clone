@@ -2,7 +2,7 @@ import graphene
 from graphene_django import DjangoObjectType
 
 from users.models import User
-from restaurants.models import Restaurant, MenuItem
+from restaurants.models import Restaurant, MenuItem, Category
 from orders.models import Order, OrderItem
 
 # UserType tanımlama
@@ -11,21 +11,26 @@ class UserType(DjangoObjectType):
         model = User
         fields = ("id", "firstName", "lastName", "email", "birthDate", "isAdmin")
 
+# CategoryType tanımlama
+class CategoryType(DjangoObjectType):
+    class Meta:
+        model = Category
+        fields = ("id", "name", "restaurant", "menu_items")
+
 # RestaurantType tanımlama
 class RestaurantType(DjangoObjectType):
     class Meta:
         model = Restaurant
-        fields = ("id", "name", "address", "phone", "menu_items")
+        fields = ("id", "name", "address", "phone", "categories")
 
-    # İlişkili verileri almak için resolver
-    def resolve_menu_items(self, info):
-        return self.menu_items.all()
+    def resolve_categories(self, info):
+        return self.categories.all()
 
 # MenuItemType tanımlama
 class MenuItemType(DjangoObjectType):
     class Meta:
         model = MenuItem
-        fields = ("id", "name", "description", "price", "restaurant")
+        fields = ("id", "name", "description", "price", "restaurant", "category")
 
 # OrderType tanımlama
 class OrderType(DjangoObjectType):
@@ -34,7 +39,7 @@ class OrderType(DjangoObjectType):
         fields = ("id", "user", "totalPrice", "createdAt", "updatedAt", "order_items")
 
     def resolve_order_items(self, info):
-        return self.items.all()
+        return self.order_items.all()
 
 # OrderItemType tanımlama
 class OrderItemType(DjangoObjectType):
@@ -50,12 +55,11 @@ class CreateUser(graphene.Mutation):
         first_name = graphene.String(required=True)
         last_name = graphene.String(required=True)
         email = graphene.String(required=True)
-        password = graphene.String(required=True)
         birth_date = graphene.Date(required=True)
 
     user = graphene.Field(UserType)
 
-    def mutate(self, info, first_name, last_name, email, password, birth_date):
+    def mutate(self, info, first_name, last_name, email, birth_date):
         if User.objects.filter(email=email).exists():
             raise Exception("Bu email adresi zaten kayıtlı.")
         
@@ -65,7 +69,6 @@ class CreateUser(graphene.Mutation):
             email=email,
             birthDate=birth_date
         )
-        user.set_password(password)
         user.save()
         return CreateUser(user=user)
 
@@ -164,6 +167,55 @@ class DeleteRestaurant(graphene.Mutation):
         except Restaurant.DoesNotExist:
             raise Exception("Restoran bulunamadı.")
 
+# Category Mutasyonları
+class CreateCategory(graphene.Mutation):
+    class Arguments:
+        restaurant_id = graphene.ID(required=True)
+        name = graphene.String(required=True)
+
+    category = graphene.Field(CategoryType)
+
+    def mutate(self, info, restaurant_id, name):
+        try:
+            restaurant = Restaurant.objects.get(pk=restaurant_id)
+        except Restaurant.DoesNotExist:
+            raise Exception("Restoran bulunamadı.")
+
+        category = Category.objects.create(restaurant=restaurant, name=name)
+        return CreateCategory(category=category)
+
+class UpdateCategory(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID(required=True)
+        name = graphene.String()
+
+    category = graphene.Field(CategoryType)
+
+    def mutate(self, info, id, name=None):
+        try:
+            category = Category.objects.get(pk=id)
+        except Category.DoesNotExist:
+            raise Exception("Kategori bulunamadı.")
+
+        if name:
+            category.name = name
+        category.save()
+        return UpdateCategory(category=category)
+
+class DeleteCategory(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID(required=True)
+
+    success = graphene.Boolean()
+
+    def mutate(self, info, id):
+        try:
+            category = Category.objects.get(pk=id)
+            category.delete()
+            return DeleteCategory(success=True)
+        except Category.DoesNotExist:
+            raise Exception("Kategori bulunamadı.")
+
 # MenuItem Mutasyonları
 class CreateMenuItem(graphene.Mutation):
     class Arguments:
@@ -171,19 +223,25 @@ class CreateMenuItem(graphene.Mutation):
         name = graphene.String(required=True)
         description = graphene.String()
         price = graphene.Float(required=True)
+        category_id = graphene.ID(required=True)
 
     menu_item = graphene.Field(MenuItemType)
 
-    def mutate(self, info, restaurant_id, name, description, price):
+    def mutate(self, info, restaurant_id, name, description, price, category_id):
         try:
             restaurant = Restaurant.objects.get(pk=restaurant_id)
         except Restaurant.DoesNotExist:
             raise Exception("Restoran bulunamadı.")
+        
+        try:
+            category = Category.objects.get(pk=category_id)
+        except Category.DoesNotExist:
+            raise Exception("Kategori bulunamadı.")
 
         if not name or price <= 0:
             raise Exception("Geçersiz ürün bilgileri.")
         
-        menu_item = MenuItem.objects.create(restaurant=restaurant, name=name, description=description, price=price)
+        menu_item = MenuItem.objects.create(restaurant=restaurant, category=category, name=name, description=description, price=price)
         return CreateMenuItem(menu_item=menu_item)
 
 class UpdateMenuItem(graphene.Mutation):
@@ -192,10 +250,11 @@ class UpdateMenuItem(graphene.Mutation):
         name = graphene.String()
         description = graphene.String()
         price = graphene.Float()
+        category_id = graphene.ID()
 
     menu_item = graphene.Field(MenuItemType)
 
-    def mutate(self, info, id, name=None, description=None, price=None):
+    def mutate(self, info, id, name=None, description=None, price=None, category_id=None):
         try:
             menu_item = MenuItem.objects.get(pk=id)
         except MenuItem.DoesNotExist:
@@ -207,6 +266,12 @@ class UpdateMenuItem(graphene.Mutation):
             menu_item.description = description
         if price is not None and price > 0:
             menu_item.price = price
+        if category_id:
+            try:
+                category = Category.objects.get(pk=category_id)
+                menu_item.category = category
+            except Category.DoesNotExist:
+                raise Exception("Kategori bulunamadı.")
         menu_item.save()
         return UpdateMenuItem(menu_item=menu_item)
 
@@ -340,6 +405,7 @@ class DeleteOrderItem(graphene.Mutation):
 class Query(graphene.ObjectType):
     all_users = graphene.List(UserType)
     all_restaurants = graphene.List(RestaurantType)
+    all_categories = graphene.List(CategoryType)
     all_menu_items = graphene.List(MenuItemType)
     all_orders = graphene.List(OrderType)
     all_order_items = graphene.List(OrderItemType)
@@ -349,6 +415,9 @@ class Query(graphene.ObjectType):
 
     def resolve_all_restaurants(root, info):
         return Restaurant.objects.all()
+
+    def resolve_all_categories(root, info):
+        return Category.objects.all()
 
     def resolve_all_menu_items(root, info):
         return MenuItem.objects.all()
@@ -366,6 +435,9 @@ class Mutation(graphene.ObjectType):
     create_restaurant = CreateRestaurant.Field()
     update_restaurant = UpdateRestaurant.Field()
     delete_restaurant = DeleteRestaurant.Field()
+    create_category = CreateCategory.Field()
+    update_category = UpdateCategory.Field()
+    delete_category = DeleteCategory.Field()
     create_menu_item = CreateMenuItem.Field()
     update_menu_item = UpdateMenuItem.Field()
     delete_menu_item = DeleteMenuItem.Field()
