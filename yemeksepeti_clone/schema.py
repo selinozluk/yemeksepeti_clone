@@ -56,10 +56,11 @@ class CreateUser(graphene.Mutation):
         last_name = graphene.String(required=True)
         email = graphene.String(required=True)
         birth_date = graphene.Date(required=True)
+        password = graphene.String(required=True)
 
     user = graphene.Field(UserType)
 
-    def mutate(self, info, first_name, last_name, email, birth_date):
+    def mutate(self, info, first_name, last_name, email, birth_date, password):
         if User.objects.filter(email=email).exists():
             raise Exception("Bu email adresi zaten kayıtlı.")
         
@@ -69,6 +70,7 @@ class CreateUser(graphene.Mutation):
             email=email,
             birthDate=birth_date
         )
+        user.set_password(password)
         user.save()
         return CreateUser(user=user)
 
@@ -409,6 +411,8 @@ class Query(graphene.ObjectType):
     all_menu_items = graphene.List(MenuItemType)
     all_orders = graphene.List(OrderType)
     all_order_items = graphene.List(OrderItemType)
+    restaurant = graphene.Field(RestaurantType, id=graphene.Int(required=True))
+    user = graphene.Field(UserType, id=graphene.Int(required=True))
 
     def resolve_all_users(root, info):
         return User.objects.all()
@@ -427,6 +431,18 @@ class Query(graphene.ObjectType):
 
     def resolve_all_order_items(root, info):
         return OrderItem.objects.all()
+
+    def resolve_restaurant(root, info, id):
+        try:
+            return Restaurant.objects.get(pk=id)
+        except Restaurant.DoesNotExist:
+            raise Exception("Restoran bulunamadı.")
+
+    def resolve_user(root, info, id):
+        try:
+            return User.objects.get(pk=id)
+        except User.DoesNotExist:
+            raise Exception("Kullanıcı bulunamadı.")
 
 class Mutation(graphene.ObjectType):
     create_user = CreateUser.Field()
