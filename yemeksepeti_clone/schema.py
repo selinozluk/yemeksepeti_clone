@@ -11,20 +11,20 @@ class UserType(DjangoObjectType):
         model = User
         fields = ("id", "firstName", "lastName", "email", "birthDate", "isAdmin")
 
-# CategoryType tanımlama
+# CategoryType tanımlama (Restoran alanı kaldırıldı)
 class CategoryType(DjangoObjectType):
     class Meta:
         model = Category
-        fields = ("id", "name", "restaurant", "menu_items")
+        fields = ("id", "name", "menu_items")
 
-# RestaurantType tanımlama
+# RestaurantType tanımlama (Kategori alanı kaldırıldı)
 class RestaurantType(DjangoObjectType):
     class Meta:
         model = Restaurant
-        fields = ("id", "name", "address", "phone", "categories")
+        fields = ("id", "name", "address", "phone", "menu_items")  # menu_items eklendi
 
-    def resolve_categories(self, info):
-        return self.categories.all()
+    def resolve_menu_items(self, info):
+        return self.menu_items.all()
 
 # MenuItemType tanımlama
 class MenuItemType(DjangoObjectType):
@@ -169,21 +169,15 @@ class DeleteRestaurant(graphene.Mutation):
         except Restaurant.DoesNotExist:
             raise Exception("Restoran bulunamadı.")
 
-# Category Mutasyonları
+# Category Mutasyonları (Restoran alanı çıkarıldı)
 class CreateCategory(graphene.Mutation):
     class Arguments:
-        restaurant_id = graphene.ID(required=True)
         name = graphene.String(required=True)
 
     category = graphene.Field(CategoryType)
 
-    def mutate(self, info, restaurant_id, name):
-        try:
-            restaurant = Restaurant.objects.get(pk=restaurant_id)
-        except Restaurant.DoesNotExist:
-            raise Exception("Restoran bulunamadı.")
-
-        category = Category.objects.create(restaurant=restaurant, name=name)
+    def mutate(self, info, name):
+        category = Category.objects.create(name=name)
         return CreateCategory(category=category)
 
 class UpdateCategory(graphene.Mutation):
