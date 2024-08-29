@@ -10,7 +10,7 @@ class RestaurantAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'address', 'phone', 'createdAt', 'updatedAt')
     list_filter = ('createdAt', 'updatedAt')
     search_fields = ('name', 'address')
-    inlines = [MenuItemInline]
+    inlines = [MenuItemInline]  # Restaurant admini için inline olarak MenuItem ekledik
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):

@@ -24,6 +24,12 @@ def register(request):
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
+            # Formdan alınan verileri kullanıcı modeline ekleyin
+            user.firstName = form.cleaned_data['first_name']
+            user.lastName = form.cleaned_data['last_name']
+            user.birthDate = form.cleaned_data['birth_date']
+            user.email = form.cleaned_data['email']
+            user.set_password(form.cleaned_data['password1'])  # Şifreyi set_password ile ayarlayın
             user.save()
             auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')  # Backend belirtildi
             return HttpResponseRedirect('/')  # Başarılı kayıt sonrası yönlendirilecek URL
@@ -32,3 +38,4 @@ def register(request):
     else:
         form = UserRegistrationForm()
     return render(request, 'users/register.html', {'form': form})
+
