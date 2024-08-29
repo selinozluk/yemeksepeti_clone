@@ -16,7 +16,7 @@ class RestaurantAdmin(admin.ModelAdmin):
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name')  # 'restaurant' alanını kaldırdık
+    list_display = ('id', 'name')  # 'restaurant' alanı kaldırıldı
     search_fields = ('name',)  # 'list_filter' kaldırıldı çünkü restaurant alanı artık yok
 
 @admin.register(MenuItem)
