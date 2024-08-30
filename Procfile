@@ -1,1 +1,1 @@
-yemeksepeti_clone: python manage.py runserver 0.0.0.0:$PORT
+yemeksepeti-clone: python manage.py runserver 0.0.0.0:$PORT
