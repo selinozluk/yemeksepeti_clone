@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import pymysql
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -88,8 +89,15 @@ DATABASES = {
         'PASSWORD': 'password',
         'HOST': 'localhost',
         'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'charset': 'utf8mb4',
+        },
     }
 }
+
+# PyMySQL kullanımı için eklenen satır
+pymysql.install_as_MySQLdb()
 
 # Custom user model
 AUTH_USER_MODEL = 'users.User'  # Kullanıcı modelini değiştirmek için eklenen satır
@@ -138,7 +146,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # GraphQL Ayarları
 GRAPHENE = {
-    "SCHEMA": "yemeksepeti_clone.schema.schema",  # Schema dosyanızın yolu
+    "SCHEMA": "yemeksepeti_clone.schema.schema",  # Schema dosyasının yolu
     "MIDDLEWARE": [
         "graphql_jwt.middleware.JSONWebTokenMiddleware",
         "graphene_django.debug.DjangoDebugMiddleware",
