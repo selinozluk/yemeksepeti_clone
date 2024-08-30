@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-2#35v7l9p&bohq8=@cv7h!ne0_-4vn@ldycij)rw8tw56$=%@n')
 
 # DEBUG modu, ortam değişkenine bağlı olarak ayarlandı
-DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 # İzin verilen hostlar, ortam değişkenine bağlı olarak ayarlandı
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost 127.0.0.1').split()
@@ -26,8 +26,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'users',  # Users uygulaması eklendi
-    'orders', # Orders eklendi
-    'restaurants', # Restoranlar eklendi
+    'orders',  # Orders eklendi
+    'restaurants',  # Restoranlar eklendi
     'graphene_django',  # Graphene-Django eklendi
     'django_filters',  # Django-Filter eklendi
     'corsheaders',  # CORS Headers eklendi
@@ -114,7 +114,12 @@ USE_I18N = True
 USE_TZ = True
 
 # Statik dosyalar ayarları
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Medya dosyaları ayarları
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Varsayılan birincil anahtar alan tipi
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -136,3 +141,24 @@ AUTHENTICATION_BACKENDS = [
 
 # CORS ayarları
 CORS_ALLOW_ALL_ORIGINS = True
+
+# Güvenlik ayarları (üretim ortamı için)
+SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False') == 'True'
+SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'False') == 'True'
+CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'False') == 'True'
+X_FRAME_OPTIONS = 'DENY'
+
+# Logging ayarları
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}
