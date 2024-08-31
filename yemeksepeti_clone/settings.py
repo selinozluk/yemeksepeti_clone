@@ -1,6 +1,10 @@
 from pathlib import Path
 import os
 import pymysql
+from dotenv import load_dotenv
+
+# Ortam değişkenlerini yükle
+load_dotenv()
 
 # PyMySQL kullanımı için eklenen satır
 pymysql.install_as_MySQLdb()
@@ -15,7 +19,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-2#35v7l9p&bohq8=@cv
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 # İzin verilen hostlar, ortam değişkenine bağlı olarak ayarlandı
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost 127.0.0.1').split()
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost').split(',')
 
 # Uygulama tanımları
 INSTALLED_APPS = [
@@ -73,7 +77,7 @@ WSGI_APPLICATION = 'yemeksepeti_clone.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('MYSQL_DATABASE', 'yemeksepeti-clone'),
+        'NAME': os.getenv('MYSQL_DATABASE', 'railway'),
         'USER': os.getenv('MYSQL_USER', 'root'),
         'PASSWORD': os.getenv('MYSQL_PASSWORD', 'password'),
         'HOST': os.getenv('MYSQL_HOST', 'localhost'),
@@ -162,3 +166,4 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+
