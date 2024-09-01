@@ -1,0 +1,18 @@
+[setup]
+python_version = "3.11"  # Python sürümü
+packages = ["postgresql", "gcc"]  # İhtiyacınız olan ek paketler
+
+[install]
+commands = [
+  "python -m venv /opt/venv",  # Sanal ortam oluşturma
+  ". /opt/venv/bin/activate",  # Sanal ortamı etkinleştirme
+  "pip install -r requirements.txt"  # Gerekli paketleri yükleme
+]
+
+[release]
+commands = [
+  "sh ./scripts/apply_migrations.sh"  # Gerekli veritabanı migrasyonlarını uygulama
+]
+
+[start]
+command = "python manage.py runserver 0.0.0.0:$PORT"  # Uygulamayı başlatma komutu
