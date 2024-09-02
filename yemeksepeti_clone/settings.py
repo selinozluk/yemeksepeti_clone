@@ -3,14 +3,14 @@ import os
 import pymysql
 from dotenv import load_dotenv
 
+# Proje dizinini tanımlama
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 # Ortam değişkenlerini yükle
-load_dotenv()
+load_dotenv(dotenv_path=BASE_DIR / '.env')
 
 # PyMySQL kullanımı için eklenen satır
 pymysql.install_as_MySQLdb()
-
-# Proje dizinini tanımlama
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Güvenlik anahtarı, ortam değişkeni olarak ayarlandı
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-2#35v7l9p&bohq8=@cv7h!ne0_-4vn@ldycij)rw8tw56$=%@n')
@@ -77,15 +77,11 @@ WSGI_APPLICATION = 'yemeksepeti_clone.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('MYSQL_DATABASE', 'railway'),
-        'USER': os.getenv('MYSQL_USER', 'root'),
-        'PASSWORD': os.getenv('MYSQL_PASSWORD', 'password'),
-        'HOST': os.getenv('MYSQL_HOST', 'localhost'),
-        'PORT': os.getenv('MYSQL_PORT', '3306'),
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset': 'utf8mb4',
-        },
+        'NAME': 'railway',
+        'USER': 'root',
+        'PASSWORD': 'password',
+        'HOST': 'autorack.proxy.rlwy.net',  # Railway'deki host adresi
+        'PORT': '10744',  # Railway'deki port numarası
     }
 }
 
@@ -166,4 +162,3 @@ LOGGING = {
         'level': 'INFO',
     },
 }
-
