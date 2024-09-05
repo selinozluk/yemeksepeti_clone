@@ -36,7 +36,7 @@ class MenuItemType(DjangoObjectType):
 class OrderType(DjangoObjectType):
     class Meta:
         model = Order
-        fields = ("id", "user", "totalPrice", "createdAt", "updatedAt", "order_items")
+        fields = ("id", "user", "totalPrice", "createdAt", "updatedAt", "items")
 
     def resolve_order_items(self, info):
         return self.order_items.all()
