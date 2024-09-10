@@ -116,6 +116,24 @@ class DeleteUser(graphene.Mutation):
             return DeleteUser(success=True)
         except User.DoesNotExist:
             raise Exception("Kullanıcı bulunamadı.")
+        
+class SignIn(graphene.Mutation):
+    class Arguments:
+        email = graphene.String(required=True)
+        password = graphene.String(required=True)
+
+    user = graphene.Field(UserType)
+
+    def mutate(self, info, email, password):
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise Exception("USER NOT FOUND")
+        
+        if not user.check_password(password):
+            raise Exception("INVALID PASSWORD")
+
+        return SignIn(user=user)
 
 # Restaurant Mutasyonları
 class CreateRestaurant(graphene.Mutation):
@@ -405,7 +423,7 @@ class Query(graphene.ObjectType):
     all_users = graphene.List(UserType)
     all_restaurants = graphene.List(RestaurantType)
     all_categories = graphene.List(CategoryType)
-    all_menu_items = graphene.List(MenuItemType)
+    all_menu_items = graphene.List(MenuItemType, restaurant_id=graphene.Int())
     all_orders = graphene.List(OrderType)
     all_order_items = graphene.List(OrderItemType)
     restaurant = graphene.Field(RestaurantType, id=graphene.Int(required=True))
@@ -420,8 +438,12 @@ class Query(graphene.ObjectType):
     def resolve_all_categories(root, info):
         return Category.objects.all()
 
-    def resolve_all_menu_items(root, info):
-        return MenuItem.objects.all()
+    def resolve_all_menu_items(root, info, **kwargs):
+        restaurant_id = kwargs.get("restaurant_id")
+        items = MenuItem.objects.all()
+        if restaurant_id is not None:
+            items = items.filter(restaurant_id=restaurant_id)
+        return items
 
     def resolve_all_orders(root, info):
         return Order.objects.all()
@@ -445,6 +467,7 @@ class Mutation(graphene.ObjectType):
     create_user = CreateUser.Field()
     update_user = UpdateUser.Field()
     delete_user = DeleteUser.Field()
+    sign_in = SignIn.Field()
     create_restaurant = CreateRestaurant.Field()
     update_restaurant = UpdateRestaurant.Field()
     delete_restaurant = DeleteRestaurant.Field()
