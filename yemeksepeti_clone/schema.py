@@ -4,6 +4,7 @@ from graphene_django import DjangoObjectType
 from users.models import User
 from restaurants.models import Restaurant, MenuItem, Category
 from orders.models import Order, OrderItem
+from yemeksepeti_clone.decorator import roles_required
 
 # UserType tanımlama
 class UserType(DjangoObjectType):
@@ -107,6 +108,7 @@ class DeleteUser(graphene.Mutation):
 
     success = graphene.Boolean()
 
+    @roles_required("ADMIN")
     def mutate(self, info, id):
         try:
             user = User.objects.get(pk=id)
@@ -388,7 +390,8 @@ class DeleteOrderItem(graphene.Mutation):
         id = graphene.ID(required=True)
 
     success = graphene.Boolean()
-
+    
+    @roles_required("STAFF","ADMIN")
     def mutate(self, info, id):
         try:
             order_item = OrderItem.objects.get(pk=id)
