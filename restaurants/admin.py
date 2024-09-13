@@ -1,7 +1,7 @@
 # restaurants/admin.py
 
 from django.contrib import admin
-from .models import Restaurant, MenuItem, Category
+from .models import Restaurant, MenuItem, RestaurantCategory, MenuItemCategory
 
 class MenuItemInline(admin.TabularInline):
     model = MenuItem
@@ -14,10 +14,16 @@ class RestaurantAdmin(admin.ModelAdmin):
     search_fields = ('name', 'address')
     inlines = [MenuItemInline]
 
-@admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
+@admin.register(RestaurantCategory)
+class RestaurantCategoryAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')  # 'restaurant' alanı kaldırıldı
     search_fields = ('name',)  # 'list_filter' kaldırıldı çünkü restaurant alanı artık yok
+
+@admin.register(MenuItemCategory)
+class MenuItemCategoryAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name')
+    search_fields = ('name',)
+
 
 @admin.register(MenuItem)
 class MenuItemAdmin(admin.ModelAdmin):
