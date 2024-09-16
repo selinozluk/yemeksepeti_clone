@@ -27,11 +27,16 @@ class RestaurantType(DjangoObjectType):
     def resolve_menu_items(self, info):
         return self.menu_items.all()
 
-# MenuItemType tanımlama
+# MenuItemType tanımlama, image alanı eklendi
 class MenuItemType(DjangoObjectType):
     class Meta:
         model = MenuItem
-        fields = ("id", "name", "description", "price", "restaurant", "category")
+        fields = ("id", "name", "description", "price", "restaurant", "category", "image")
+
+    def resolve_image(self, info):
+        if self.image:
+            return self.image.url
+        return None
 
 # OrderType tanımlama
 class OrderType(DjangoObjectType):
@@ -128,7 +133,7 @@ class SignIn(graphene.Mutation):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise Exception("USER NOT FOUND")
+            raise Exception("Kullanıcı bulunamadı.")
         
         if not user.check_password(password):
             raise Exception("INVALID PASSWORD")
@@ -304,8 +309,8 @@ class DeleteMenuItem(graphene.Mutation):
             return DeleteMenuItem(success=True)
         except MenuItem.DoesNotExist:
             raise Exception("Menü öğesi bulunamadı.")
-        
-        # Order Mutasyonları
+
+# Order Mutasyonları
 class CreateOrder(graphene.Mutation):
     class Arguments:
         user_id = graphene.ID(required=True)
@@ -409,7 +414,7 @@ class DeleteOrderItem(graphene.Mutation):
 
     success = graphene.Boolean()
 
-    @roles_required("STAFF","ADMIN")
+    @roles_required("STAFF", "ADMIN")
     def mutate(self, info, id):
         try:
             order_item = OrderItem.objects.get(pk=id)
