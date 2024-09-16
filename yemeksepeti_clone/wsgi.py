@@ -1,16 +1,8 @@
-"""
-WSGI config for yemeksepeti_clone project.
-
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/5.1/howto/deployment/wsgi/
-"""
-
 import os
-
 from django.core.wsgi import get_wsgi_application
 
+# Django ayarlarının hangi dosyada olduğu
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'yemeksepeti_clone.settings')
 
+# WSGI sunucusunun çalışması için gerekli fonksiyonu 
 application = get_wsgi_application()
