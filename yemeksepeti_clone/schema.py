@@ -6,6 +6,8 @@ from restaurants.models import Restaurant, MenuItem, MenuItemCategory, Restauran
 from orders.models import Order, OrderItem
 from yemeksepeti_clone.decorator import roles_required
 
+
+
 # UserType tanımlama
 class UserType(DjangoObjectType):
     class Meta:
@@ -136,7 +138,7 @@ class SignIn(graphene.Mutation):
             raise Exception("Kullanıcı bulunamadı.")
         
         if not user.check_password(password):
-            raise Exception("INVALID PASSWORD")
+            raise Exception("Geçersiz Parola")
 
         return SignIn(user=user)
 
