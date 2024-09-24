@@ -23,9 +23,9 @@ DEBUG = True
 ALLOWED_HOSTS = ['35.169.62.192', '10.0.0.25', 'localhost', '127.0.0.1']  
 
 # AWS S3 ayarları
-AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = 'yemeksepeti-clone-media'
 AWS_S3_REGION_NAME = 'us-east-1'  # Bucket bölgesi
 AWS_S3_FILE_OVERWRITE = False  # Aynı dosya ismiyle yüklendiğinde üzerine yazılmasın
 AWS_DEFAULT_ACL = None  # Herkesin dosyalara erişim izni olmasın
@@ -138,7 +138,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Media URL S3 ile bağlantı için düzenlendi
+# Media URL S3 ile bağlantısı
 MEDIA_URL = 'https://yemeksepeti-clone-media.s3.amazonaws.com/Proje%20Yemekleri/'
 
 
