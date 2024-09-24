@@ -43,6 +43,7 @@ class MenuItem(models.Model):
     image = models.ImageField(upload_to=upload_to, null=True, blank=True)  # Burada upload_to fonksiyonunu kullanıyoruz
     createdAt = models.DateTimeField(auto_now_add=True)
     updatedAt = models.DateTimeField(auto_now=True)
+    
 
     def __str__(self):
         return self.name
