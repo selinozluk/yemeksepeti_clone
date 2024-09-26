@@ -27,10 +27,17 @@ AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = 'yemeksepeti-clone-media'
 AWS_S3_REGION_NAME = 'us-east-1'  # Bucket bölgesi
-AWS_S3_FILE_OVERWRITE = False  # Aynı dosya ismiyle yüklendiğinde üzerine yazılmasın
-AWS_DEFAULT_ACL = None  # Herkesin dosyalara erişim izni olmasın
+AWS_S3_FILE_OVERWRITE = True  # Aynı dosya isimleriyle yükleme yaparken üzerine yazmayı sağlar
 AWS_QUERYSTRING_AUTH = False  # İsteğe bağlı, URL'de imza olmadan dosya erişimi sağlar
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'  # Varsayılan depolama S3 olarak ayarlanıyor
+
+STORAGES = {
+    'default': {
+        'BACKEND': 'storages.backends.s3.S3Storage',
+    },
+    'staticfiles': {
+        'BACKEND': 'storages.backends.s3.S3Storage',
+        }
+}
 
 # Application definition
 
