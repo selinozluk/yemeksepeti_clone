@@ -138,9 +138,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Media URL S3 ile bağlantısı
-MEDIA_URL = 'https://yemeksepeti-clone-media.s3.amazonaws.com/Proje%20Yemekleri/'
-
+# Media URL ve Media Root
+MEDIA_URL = 'https://yemeksepeti-clone-media.s3.amazonaws.com/Proje_Yemekleri/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
