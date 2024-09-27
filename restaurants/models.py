@@ -10,7 +10,7 @@ class RestaurantCategory(models.Model):
 
     def __str__(self):
         return self.name
-
+    
 # Menü öğeleri için kategori modeli
 class MenuItemCategory(models.Model):
     name = models.CharField(max_length=100)
