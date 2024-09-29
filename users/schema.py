@@ -3,24 +3,32 @@ from graphene_django import DjangoObjectType
 from users.models import User
 from yemeksepeti_clone.decorator import roles_required
 
+# Kullanıcı modelini GraphQL için tanımlama
 class UserType(DjangoObjectType):
     class Meta:
         model = User
         fields = ("id", "firstName", "lastName", "email", "birthDate", "isAdmin")
 
+# Sorgular
 class Query(graphene.ObjectType):
+    # Tüm kullanıcıları listeleme (Sadece ADMIN yetkisi olanlar)
     all_users = graphene.List(UserType)
-    user = graphene.Field(UserType, id=graphene.Int(required=True))
 
+    @roles_required("ADMIN")
     def resolve_all_users(root, info):
         return User.objects.all()
 
+    # Belirli bir kullanıcıyı ID ile getirme (ADMIN ve STAFF yetkisi olanlar)
+    user = graphene.Field(UserType, id=graphene.Int(required=True))
+
+    @roles_required("ADMIN", "STAFF")
     def resolve_user(root, info, id):
         try:
             return User.objects.get(pk=id)
         except User.DoesNotExist:
             raise Exception("Kullanıcı bulunamadı.")
 
+# Kullanıcı oluşturma mutasyonu (Sadece ADMIN yetkisi olanlar)
 class CreateUser(graphene.Mutation):
     class Arguments:
         first_name = graphene.String(required=True)
@@ -31,6 +39,7 @@ class CreateUser(graphene.Mutation):
 
     user = graphene.Field(UserType)
 
+    @roles_required("ADMIN")
     def mutate(self, info, first_name, last_name, email, birth_date, password):
         if User.objects.filter(email=email).exists():
             raise Exception("Bu email adresi zaten kayıtlı.")
@@ -44,6 +53,7 @@ class CreateUser(graphene.Mutation):
         user.save()
         return CreateUser(user=user)
 
+# Kullanıcı güncelleme mutasyonu (Sadece ADMIN yetkisi olanlar)
 class UpdateUser(graphene.Mutation):
     class Arguments:
         id = graphene.ID(required=True)
@@ -54,6 +64,7 @@ class UpdateUser(graphene.Mutation):
 
     user = graphene.Field(UserType)
 
+    @roles_required("ADMIN")
     def mutate(self, info, id, first_name=None, last_name=None, email=None, birth_date=None):
         try:
             user = User.objects.get(pk=id)
@@ -70,6 +81,7 @@ class UpdateUser(graphene.Mutation):
         user.save()
         return UpdateUser(user=user)
 
+# Kullanıcı silme mutasyonu (Sadece ADMIN yetkisi olanlar)
 class DeleteUser(graphene.Mutation):
     class Arguments:
         id = graphene.ID(required=True)
@@ -85,6 +97,7 @@ class DeleteUser(graphene.Mutation):
         except User.DoesNotExist:
             raise Exception("Kullanıcı bulunamadı.")
 
+# Giriş yapma mutasyonu (Herkes için)
 class SignIn(graphene.Mutation):
     class Arguments:
         email = graphene.String(required=True)
@@ -101,6 +114,7 @@ class SignIn(graphene.Mutation):
             raise Exception("Geçersiz Parola")
         return SignIn(user=user)
 
+# Mutasyonlar
 class Mutation(graphene.ObjectType):
     create_user = CreateUser.Field()
     update_user = UpdateUser.Field()
