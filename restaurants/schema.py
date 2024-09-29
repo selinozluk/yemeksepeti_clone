@@ -1,6 +1,7 @@
 import graphene
 from graphene_django import DjangoObjectType
 from restaurants.models import Restaurant, MenuItem, RestaurantCategory, MenuItemCategory
+from yemeksepeti_clone.decorator import roles_required
 
 
 # Restaurant modelini GraphQL için tanımlama
@@ -9,16 +10,16 @@ class RestaurantType(DjangoObjectType):
         model = Restaurant
         fields = ("id", "name", "address", "phone", "menu_items")
 
+
 # Menü öğelerini GraphQL için tanımlama
 class MenuItemType(DjangoObjectType):
     class Meta:
         model = MenuItem
         fields = ("id", "name", "description", "price", "restaurant", "category", "image")
-        
-        
+
     def resolve_image(self, info):
         if self.image:
-            return info.context.build_absolute_uri(self.image.url)  # Tam URL'yi döndür
+            return info.context.build_absolute_uri(self.image.url)
         return None
 
 
@@ -28,31 +29,32 @@ class RestaurantCategoryType(DjangoObjectType):
         model = RestaurantCategory
         fields = ("id", "name")
 
+
 # Sorgular
 class Query(graphene.ObjectType):
-    # Tüm restoranları listeleme
+    # Tüm restoranları listeleme (Kullanıcılar da görebilir)
     all_restaurants = graphene.List(RestaurantType)
-    # Belirli bir restoranı ID ile getirme
-    restaurant = graphene.Field(RestaurantType, id=graphene.Int(required=True))
 
-    # Tüm restoranları döndürme
-    def resolve_all_restaurants(root, info):
+    def resolve_all_restaurants(self, info):
         return Restaurant.objects.all()
 
-    # Belirli bir restoranı ID ile döndürme
-    def resolve_restaurant(root, info, id):
+    # Belirli bir restoranı ID ile getirme (Herkes görebilir)
+    restaurant = graphene.Field(RestaurantType, id=graphene.Int(required=True))
+
+    def resolve_restaurant(self, info, id):
         try:
             return Restaurant.objects.get(pk=id)
         except Restaurant.DoesNotExist:
             raise Exception("Restoran bulunamadı.")
 
-    # Menü öğelerini listeleme (eklenen sorgu)
+    # Menü öğelerini listeleme (Herkes görebilir)
     all_menu_items = graphene.List(MenuItemType, restaurant_id=graphene.Int(required=True))
 
     def resolve_all_menu_items(root, info, restaurant_id):
         return MenuItem.objects.filter(restaurant_id=restaurant_id)
 
-# Restoran oluşturma mutasyonu
+
+# Restoran oluşturma mutasyonu (Sadece STAFF ve ADMIN için)
 class CreateRestaurant(graphene.Mutation):
     class Arguments:
         name = graphene.String(required=True)
@@ -61,11 +63,13 @@ class CreateRestaurant(graphene.Mutation):
 
     restaurant = graphene.Field(RestaurantType)
 
+    @roles_required("STAFF", "ADMIN")
     def mutate(self, info, name, address, phone):
         restaurant = Restaurant.objects.create(name=name, address=address, phone=phone)
         return CreateRestaurant(restaurant=restaurant)
 
-# Restoran güncelleme mutasyonu
+
+# Restoran güncelleme mutasyonu (Sadece ADMIN için)
 class UpdateRestaurant(graphene.Mutation):
     class Arguments:
         id = graphene.ID(required=True)
@@ -75,6 +79,7 @@ class UpdateRestaurant(graphene.Mutation):
 
     restaurant = graphene.Field(RestaurantType)
 
+    @roles_required("ADMIN")
     def mutate(self, info, id, name=None, address=None, phone=None):
         try:
             restaurant = Restaurant.objects.get(pk=id)
@@ -89,13 +94,15 @@ class UpdateRestaurant(graphene.Mutation):
         restaurant.save()
         return UpdateRestaurant(restaurant=restaurant)
 
-# Restoran silme mutasyonu
+
+# Restoran silme mutasyonu (Sadece ADMIN için)
 class DeleteRestaurant(graphene.Mutation):
     class Arguments:
         id = graphene.ID(required=True)
 
     success = graphene.Boolean()
 
+    @roles_required("ADMIN")
     def mutate(self, info, id):
         try:
             restaurant = Restaurant.objects.get(pk=id)
@@ -104,18 +111,21 @@ class DeleteRestaurant(graphene.Mutation):
         except Restaurant.DoesNotExist:
             raise Exception("Restoran bulunamadı.")
 
-# Kategori oluşturma mutasyonu
+
+# Kategori oluşturma mutasyonu (Sadece STAFF ve ADMIN için)
 class CreateCategory(graphene.Mutation):
     class Arguments:
         name = graphene.String(required=True)
 
     category = graphene.Field(RestaurantCategoryType)
 
+    @roles_required("STAFF", "ADMIN")
     def mutate(self, info, name):
         category = RestaurantCategory.objects.create(name=name)
         return CreateCategory(category=category)
 
-# Kategori güncelleme mutasyonu
+
+# Kategori güncelleme mutasyonu (Sadece ADMIN için)
 class UpdateCategory(graphene.Mutation):
     class Arguments:
         id = graphene.ID(required=True)
@@ -123,6 +133,7 @@ class UpdateCategory(graphene.Mutation):
 
     category = graphene.Field(RestaurantCategoryType)
 
+    @roles_required("ADMIN")
     def mutate(self, info, id, name=None):
         try:
             category = RestaurantCategory.objects.get(pk=id)
@@ -133,13 +144,15 @@ class UpdateCategory(graphene.Mutation):
         category.save()
         return UpdateCategory(category=category)
 
-# Kategori silme mutasyonu
+
+# Kategori silme mutasyonu (Sadece ADMIN için)
 class DeleteCategory(graphene.Mutation):
     class Arguments:
         id = graphene.ID(required=True)
 
     success = graphene.Boolean()
 
+    @roles_required("ADMIN")
     def mutate(self, info, id):
         try:
             category = RestaurantCategory.objects.get(pk=id)
@@ -148,7 +161,8 @@ class DeleteCategory(graphene.Mutation):
         except RestaurantCategory.DoesNotExist:
             raise Exception("Kategori bulunamadı.")
 
-# Menü öğesi oluşturma mutasyonu
+
+# Menü öğesi oluşturma mutasyonu (Sadece STAFF ve ADMIN için)
 class CreateMenuItem(graphene.Mutation):
     class Arguments:
         restaurant_id = graphene.ID(required=True)
@@ -159,6 +173,7 @@ class CreateMenuItem(graphene.Mutation):
 
     menu_item = graphene.Field(MenuItemType)
 
+    @roles_required("STAFF", "ADMIN")
     def mutate(self, info, restaurant_id, name, description, price, category_id):
         try:
             restaurant = Restaurant.objects.get(pk=restaurant_id)
@@ -173,7 +188,8 @@ class CreateMenuItem(graphene.Mutation):
         menu_item = MenuItem.objects.create(restaurant=restaurant, category=category, name=name, description=description, price=price)
         return CreateMenuItem(menu_item=menu_item)
 
-# Menü öğesi güncelleme mutasyonu
+
+# Menü öğesi güncelleme mutasyonu (Sadece STAFF ve ADMIN için)
 class UpdateMenuItem(graphene.Mutation):
     class Arguments:
         id = graphene.ID(required=True)
@@ -184,6 +200,7 @@ class UpdateMenuItem(graphene.Mutation):
 
     menu_item = graphene.Field(MenuItemType)
 
+    @roles_required("STAFF", "ADMIN")
     def mutate(self, info, id, name=None, description=None, price=None, category_id=None):
         try:
             menu_item = MenuItem.objects.get(pk=id)
@@ -204,13 +221,15 @@ class UpdateMenuItem(graphene.Mutation):
         menu_item.save()
         return UpdateMenuItem(menu_item=menu_item)
 
-# Menü öğesi silme mutasyonu
+
+# Menü öğesi silme mutasyonu (Sadece ADMIN için)
 class DeleteMenuItem(graphene.Mutation):
     class Arguments:
         id = graphene.ID(required=True)
 
     success = graphene.Boolean()
 
+    @roles_required("ADMIN")
     def mutate(self, info, id):
         try:
             menu_item = MenuItem.objects.get(pk=id)
@@ -218,6 +237,7 @@ class DeleteMenuItem(graphene.Mutation):
             return DeleteMenuItem(success=True)
         except MenuItem.DoesNotExist:
             raise Exception("Menü öğesi bulunamadı.")
+
 
 # Mutation sınıfı
 class Mutation(graphene.ObjectType):
