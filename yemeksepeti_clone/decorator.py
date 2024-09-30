@@ -19,7 +19,7 @@ def roles_required(*roles):
             
             # Staff yetkisi kontrolü
             if "STAFF" in roles and not user.is_staff:
-                print(f"Kullanıcı: {user.email}, Staff mı?: {user.is_staff}")
+                print(f"Kullanıcı: {user.email}, Staff mı?: {user.is_staff}, Admin mi?: {user.is_superuser}")
                 raise Exception("Yetkiniz yok.")
 
 
