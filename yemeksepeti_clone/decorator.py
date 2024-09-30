@@ -13,12 +13,16 @@ def roles_required(*roles):
             if not user.is_authenticated:
                 raise Exception("Giriş yapmadınız.")
             
-            if "ADMIN" in roles and not user.isAdmin:
+            # Admin yetkisi kontrolü
+            if "ADMIN" in roles and not user.is_superuser:
                 raise Exception("Yetkiniz yok.")
             
+            # Staff yetkisi kontrolü
             if "STAFF" in roles and not user.is_staff:
+                print(f"Kullanıcı: {user.email}, Staff mı?: {user.is_staff}")
                 raise Exception("Yetkiniz yok.")
-            
+
+
             return func(root, info, *args, **kwargs)
         return wrapped
     return wrapper
