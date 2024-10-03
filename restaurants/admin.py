@@ -9,8 +9,8 @@ class MenuItemInline(admin.TabularInline):
 
 @admin.register(Restaurant)
 class RestaurantAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'address', 'phone', 'createdAt', 'updatedAt')
-    list_filter = ('createdAt', 'updatedAt')
+    list_display = ('id', 'name', 'address', 'phone', 'created_at', 'updated_at')
+    list_filter = ('created_at', 'updated_at')
     search_fields = ('name', 'address')
     inlines = [MenuItemInline]
 
@@ -27,6 +27,6 @@ class MenuItemCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(MenuItem)
 class MenuItemAdmin(admin.ModelAdmin):
-    list_display = ('id', 'restaurant', 'category', 'name', 'price', 'createdAt', 'updatedAt')
-    list_filter = ('createdAt', 'updatedAt', 'category', 'restaurant')
+    list_display = ('id', 'restaurant', 'category', 'name', 'price', 'created_at', 'updated_at')
+    list_filter = ('created_at', 'updated_at', 'category', 'restaurant')
     search_fields = ('name', 'description')
