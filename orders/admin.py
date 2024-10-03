@@ -17,4 +17,3 @@ class OrderItemAdmin(admin.ModelAdmin):
     list_display = ('id', 'order', 'product_name', 'quantity', 'price', 'created_at', 'updated_at')  # Alan isimleri düzeltildi
     list_filter = ('created_at', 'updated_at')  # Alan isimleri düzeltildi
     search_fields = ('product_name',)  # Alan ismi düzeltildi
-
