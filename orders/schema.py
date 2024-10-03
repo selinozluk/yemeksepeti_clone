@@ -8,13 +8,13 @@ from yemeksepeti_clone.decorator import roles_required
 class OrderType(DjangoObjectType):
     class Meta:
         model = Order
-        fields = ("id", "user", "totalPrice", "created_at", "updated_at", "items")
+        fields = ("id", "user", "total_price", "created_at", "updated_at", "items")
 
 # Sipariş öğesi modelini GraphQL için tanımlama
 class OrderItemType(DjangoObjectType):
     class Meta:
         model = OrderItem
-        fields = ("id", "order", "productName", "quantity", "price", "created_at", "updated_at")
+        fields = ("id", "order", "product_name", "quantity", "price", "created_at", "updated_at")
 
 # Sepet modeli için GraphQL tanımı
 class CartType(DjangoObjectType):
@@ -103,7 +103,7 @@ class UpdateOrder(graphene.Mutation):
             raise Exception("Sipariş bulunamadı.")
         
         if total_price is not None and total_price > 0:
-            order.totalPrice = total_price
+            order.total_price = total_price
         
         order.save()
         return UpdateOrder(order=order)
@@ -151,7 +151,7 @@ class UpdateOrderItem(graphene.Mutation):
             raise Exception("Sipariş öğesi bulunamadı.")
         
         if product_name:
-            order_item.productName = product_name
+            order_item.product_name = product_name
         if quantity is not None and quantity > 0:
             order_item.quantity = quantity
         if price is not None and price > 0:
@@ -200,7 +200,7 @@ class CreateOrderItem(graphene.Mutation):
             raise Exception("Sipariş bulunamadı.")
         if not product_name or quantity <= 0 or price <= 0:
             raise Exception("Geçersiz ürün bilgileri.")
-        order_item = OrderItem.objects.create(order=order, productName=product_name, quantity=quantity, price=price)
+        order_item = OrderItem.objects.create(order=order, product_name=product_name, quantity=quantity, price=price)
         return CreateOrderItem(order_item=order_item)
 
 # Sepet öğesi güncelleme mutasyonu
