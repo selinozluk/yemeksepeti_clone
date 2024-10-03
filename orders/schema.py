@@ -1,76 +1,88 @@
 import graphene
 from graphene_django import DjangoObjectType
 from orders.models import Order, OrderItem, Cart, CartItem
-from users.models import User
+from restaurants.models import MenuItem
 from yemeksepeti_clone.decorator import roles_required
 
 # Sipariş modelini GraphQL için tanımlama
 class OrderType(DjangoObjectType):
     class Meta:
         model = Order
-        fields = ("id", "user", "totalPrice", "createdAt", "updatedAt", "items")
+        fields = ("id", "user", "totalPrice", "created_at", "updated_at", "items")
 
 # Sipariş öğesi modelini GraphQL için tanımlama
 class OrderItemType(DjangoObjectType):
     class Meta:
         model = OrderItem
-        fields = ("id", "order", "productName", "quantity", "price", "createdAt", "updatedAt")
+        fields = ("id", "order", "productName", "quantity", "price", "created_at", "updated_at")
 
 # Sepet modeli için GraphQL tanımı
 class CartType(DjangoObjectType):
     class Meta:
         model = Cart
-        fields = ("id", "user", "items", "createdAt", "updatedAt")
+        fields = ("id", "user", "items", "created_at", "updated_at")
 
 # Sepet öğesi modeli için GraphQL tanımı
 class CartItemType(DjangoObjectType):
     class Meta:
         model = CartItem
-        fields = ("id", "cart", "productName", "quantity", "price", "createdAt", "updatedAt")
+        fields = ("id", "cart", "product", "quantity", "price", "created_at", "updated_at")
 
 # Sorgular
 class Query(graphene.ObjectType):
     # Kullanıcının sadece kendi siparişlerini görmesi için
-    @roles_required("USER")
+    all_orders = graphene.List(OrderType)
+    
+    @roles_required("CUSTOMER")
     def resolve_all_orders(root, info):
         user = info.context.user
-        return Order.objects.filter(user=user)
+        if user.is_authenticated:
+            return Order.objects.filter(user=user)
+        raise Exception("Giriş yapmalısınız.")
 
     # Belirli bir siparişi ID ile getirme
-    @roles_required("USER")
+    order = graphene.Field(OrderType, id=graphene.Int(required=True))
+
+    @roles_required("CUSTOMER", "STAFF")
     def resolve_order(root, info, id):
-        try:
-            order = Order.objects.get(pk=id, user=info.context.user)
-            return order
-        except Order.DoesNotExist:
-            raise Exception("Sipariş bulunamadı.")
+        user = info.context.user
+        if user.is_authenticated:
+            try:
+                return Order.objects.get(pk=id, user=user)
+            except Order.DoesNotExist:
+                raise Exception("Sipariş bulunamadı.")
+        raise Exception("Giriş yapmalısınız.")
 
     # Kullanıcının sepetini getirme
-    @roles_required("USER")
-    def resolve_user_cart(self, info, user_id):
-        try:
-            return Cart.objects.get(user_id=user_id, user=info.context.user)
-        except Cart.DoesNotExist:
-            raise Exception("Sepet bulunamadı.")
+    user_cart = graphene.Field(CartType)
+
+    @roles_required("CUSTOMER")
+    def resolve_user_cart(self, info):
+        user = info.context.user
+        if user.is_authenticated:
+            try:
+                return Cart.objects.get(user=user)
+            except Cart.DoesNotExist:
+                raise Exception("Sepet bulunamadı.")
+        raise Exception("Giriş yapmalısınız.")
 
 # Sipariş oluşturma mutasyonu
 class CreateOrder(graphene.Mutation):
     class Arguments:
-        user_id = graphene.ID(required=True)
         total_price = graphene.Float(required=True)
 
     order = graphene.Field(OrderType)
 
-    @roles_required("USER")
-    def mutate(self, info, user_id, total_price):
-        try:
-            user = User.objects.get(pk=user_id)
-        except User.DoesNotExist:
-            raise Exception("Kullanıcı bulunamadı.")
+    @roles_required("CUSTOMER")
+    def mutate(self, info, total_price):
+        user = info.context.user
+        if not user.is_authenticated:
+            raise Exception("Giriş yapmalısınız.")
         if total_price <= 0:
             raise Exception("Geçersiz toplam fiyat.")
         order = Order.objects.create(user=user, totalPrice=total_price)
         return CreateOrder(order=order)
+
 
 # Sipariş güncelleme mutasyonu
 class UpdateOrder(graphene.Mutation):
@@ -80,16 +92,22 @@ class UpdateOrder(graphene.Mutation):
 
     order = graphene.Field(OrderType)
 
-    @roles_required("USER")
+    @roles_required("CUSTOMER", "STAFF")
     def mutate(self, info, id, total_price=None):
+        user = info.context.user
+        if not user.is_authenticated:
+            raise Exception("Giriş yapmalısınız.")
         try:
-            order = Order.objects.get(pk=id, user=info.context.user)
+            order = Order.objects.get(pk=id, user=user)
         except Order.DoesNotExist:
             raise Exception("Sipariş bulunamadı.")
+        
         if total_price is not None and total_price > 0:
             order.totalPrice = total_price
+        
         order.save()
         return UpdateOrder(order=order)
+
 
 # Sipariş silme mutasyonu
 class DeleteOrder(graphene.Mutation):
@@ -98,35 +116,20 @@ class DeleteOrder(graphene.Mutation):
 
     success = graphene.Boolean()
 
-    @roles_required("USER")
+    @roles_required("CUSTOMER", "STAFF")
     def mutate(self, info, id):
+        user = info.context.user
+        if not user.is_authenticated:
+            raise Exception("Giriş yapmalısınız.")
         try:
-            order = Order.objects.get(pk=id, user=info.context.user)
+            order = Order.objects.get(pk=id, user=user)
             order.delete()
             return DeleteOrder(success=True)
         except Order.DoesNotExist:
             raise Exception("Sipariş bulunamadı.")
 
-# Sipariş öğesi oluşturma mutasyonu
-class CreateOrderItem(graphene.Mutation):
-    class Arguments:
-        order_id = graphene.ID(required=True)
-        product_name = graphene.String(required=True)
-        quantity = graphene.Int(required=True)
-        price = graphene.Float(required=True)
 
-    order_item = graphene.Field(OrderItemType)
 
-    @roles_required("USER")
-    def mutate(self, info, order_id, product_name, quantity, price):
-        try:
-            order = Order.objects.get(pk=order_id, user=info.context.user)
-        except Order.DoesNotExist:
-            raise Exception("Sipariş bulunamadı.")
-        if not product_name or quantity <= 0 or price <= 0:
-            raise Exception("Geçersiz ürün bilgileri.")
-        order_item = OrderItem.objects.create(order=order, productName=product_name, quantity=quantity, price=price)
-        return CreateOrderItem(order_item=order_item)
 
 # Sipariş öğesi güncelleme mutasyonu
 class UpdateOrderItem(graphene.Mutation):
@@ -138,10 +141,13 @@ class UpdateOrderItem(graphene.Mutation):
 
     order_item = graphene.Field(OrderItemType)
 
-    @roles_required("USER")
+    @roles_required("CUSTOMER", "STAFF")
     def mutate(self, info, id, product_name=None, quantity=None, price=None):
+        user = info.context.user
+        if not user.is_authenticated:
+            raise Exception("Giriş yapmalısınız.")
         try:
-            order_item = OrderItem.objects.get(pk=id, order__user=info.context.user)
+            order_item = OrderItem.objects.get(pk=id, order__user=user)
         except OrderItem.DoesNotExist:
             raise Exception("Sipariş öğesi bulunamadı.")
         
@@ -162,32 +168,41 @@ class DeleteOrderItem(graphene.Mutation):
 
     success = graphene.Boolean()
 
-    @roles_required("USER")
+    @roles_required("CUSTOMER", "STAFF")
     def mutate(self, info, id):
+        user = info.context.user
+        if not user.is_authenticated:
+            raise Exception("Giriş yapmalısınız.")
         try:
-            order_item = OrderItem.objects.get(pk=id, order__user=info.context.user)
+            order_item = OrderItem.objects.get(pk=id, order__user=user)
             order_item.delete()
             return DeleteOrderItem(success=True)
         except OrderItem.DoesNotExist:
             raise Exception("Sipariş öğesi bulunamadı.")
 
-# Sepete öğe ekleme mutasyonu
-class AddCartItem(graphene.Mutation):
+# Sipariş öğesi oluşturma mutasyonu
+class CreateOrderItem(graphene.Mutation):
     class Arguments:
-        user_id = graphene.ID(required=True)
+        order_id = graphene.ID(required=True)
         product_name = graphene.String(required=True)
         quantity = graphene.Int(required=True)
         price = graphene.Float(required=True)
 
-    cart_item = graphene.Field(CartItemType)
+    order_item = graphene.Field(OrderItemType)
 
-    @roles_required("USER")
-    def mutate(self, info, user_id, product_name, quantity, price):
-        cart, created = Cart.objects.get_or_create(user_id=user_id, user=info.context.user)
-        cart_item = CartItem.objects.create(
-            cart=cart, productName=product_name, quantity=quantity, price=price
-        )
-        return AddCartItem(cart_item=cart_item)
+    @roles_required("CUSTOMER", "STAFF")
+    def mutate(self, info, order_id, product_name, quantity, price):
+        user = info.context.user
+        if not user.is_authenticated:
+            raise Exception("Giriş yapmalısınız.")
+        try:
+            order = Order.objects.get(pk=order_id, user=user)
+        except Order.DoesNotExist:
+            raise Exception("Sipariş bulunamadı.")
+        if not product_name or quantity <= 0 or price <= 0:
+            raise Exception("Geçersiz ürün bilgileri.")
+        order_item = OrderItem.objects.create(order=order, productName=product_name, quantity=quantity, price=price)
+        return CreateOrderItem(order_item=order_item)
 
 # Sepet öğesi güncelleme mutasyonu
 class UpdateCartItem(graphene.Mutation):
@@ -197,10 +212,13 @@ class UpdateCartItem(graphene.Mutation):
 
     cart_item = graphene.Field(CartItemType)
 
-    @roles_required("USER")
+    @roles_required("CUSTOMER")
     def mutate(self, info, cart_item_id, quantity):
+        user = info.context.user
+        if not user.is_authenticated:
+            raise Exception("Giriş yapmalısınız.")
         try:
-            cart_item = CartItem.objects.get(pk=cart_item_id, cart__user=info.context.user)
+            cart_item = CartItem.objects.get(pk=cart_item_id, cart__user=user)
             cart_item.quantity = quantity
             cart_item.save()
             return UpdateCartItem(cart_item=cart_item)
@@ -214,23 +232,55 @@ class DeleteCartItem(graphene.Mutation):
 
     success = graphene.Boolean()
 
-    @roles_required("USER")
+    @roles_required("CUSTOMER")
     def mutate(self, info, cart_item_id):
+        user = info.context.user
+        if not user.is_authenticated:
+            raise Exception("Giriş yapmalısınız.")
         try:
-            cart_item = CartItem.objects.get(pk=cart_item_id, cart__user=info.context.user)
+            cart_item = CartItem.objects.get(pk=cart_item_id, cart__user=user)
             cart_item.delete()
             return DeleteCartItem(success=True)
         except CartItem.DoesNotExist:
             raise Exception("Sepet öğesi bulunamadı.")
 
-# Order ve Cart Mutation sınıfı
+# Sepete öğe ekleme mutasyonu
+class AddCartItem(graphene.Mutation):
+    class Arguments:
+        product_id = graphene.ID(required=True)
+        quantity = graphene.Int(required=True)
+
+    cart_item = graphene.Field(CartItemType)
+
+    @roles_required("CUSTOMER")
+    def mutate(self, info, product_id, quantity):
+        user = info.context.user
+        if not user.is_authenticated:
+            raise Exception("Giriş yapmalısınız.")
+        cart, created = Cart.objects.get_or_create(user=user)
+        product = MenuItem.objects.get(id=product_id)
+        cart_item, item_created = CartItem.objects.get_or_create(cart=cart, product=product)
+        
+        if not item_created:
+            cart_item.quantity += quantity
+        else:
+            cart_item.quantity = quantity
+        cart_item.save()
+        return AddCartItem(cart_item=cart_item)
+
+# Mutation sınıfı
 class Mutation(graphene.ObjectType):
+    # Sipariş işlemleri
     create_order = CreateOrder.Field()
     update_order = UpdateOrder.Field()
     delete_order = DeleteOrder.Field()
+    
+    # Sipariş öğesi işlemleri
     create_order_item = CreateOrderItem.Field()
     update_order_item = UpdateOrderItem.Field()
     delete_order_item = DeleteOrderItem.Field()
+    
+    # Sepet işlemleri
     add_cart_item = AddCartItem.Field()
     update_cart_item = UpdateCartItem.Field()
     delete_cart_item = DeleteCartItem.Field()
