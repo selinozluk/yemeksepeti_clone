@@ -3,6 +3,9 @@ from graphene_django import DjangoObjectType
 from orders.models import Order, OrderItem, Cart, CartItem
 from restaurants.models import MenuItem
 from yemeksepeti_clone.decorator import roles_required
+from decimal import Decimal
+
+
 
 # Sipariş modelini GraphQL için tanımlama
 class OrderType(DjangoObjectType):
@@ -69,7 +72,7 @@ class Query(graphene.ObjectType):
 # Sipariş oluşturma mutasyonu
 class CreateOrder(graphene.Mutation):
     class Arguments:
-        total_price = graphene.Float(required=True)
+        total_price = graphene.Float(required=True) 
 
     order = graphene.Field(OrderType)
 
@@ -80,8 +83,9 @@ class CreateOrder(graphene.Mutation):
             raise Exception("Giriş yapmalısınız.")
         if total_price <= 0:
             raise Exception("Geçersiz toplam fiyat.")
-        order = Order.objects.create(user=user, totalPrice=total_price)
+        order = Order.objects.create(user=user, total_price=Decimal(total_price))  # total_price olarak düzeltildi
         return CreateOrder(order=order)
+
 
 
 # Sipariş güncelleme mutasyonu
