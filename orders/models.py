@@ -41,7 +41,7 @@ class Cart(models.Model):
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(MenuItem, on_delete=models.CASCADE)  # MenuItem ile bağlantı
-    quantity = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField(null=False)  # null=False ekleniyor
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Fiyat doğrudan MenuItem'dan alınmalı
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -49,7 +49,9 @@ class CartItem(models.Model):
     def __str__(self):
         return f'{self.product.name} x {self.quantity} - {self.product.price * self.quantity} total'
 
-    # Sepet öğesi kaydedildiğinde ürün fiyatını güncelle
-    def save(self, *args, **kwargs):
-        self.price = self.product.price * self.quantity  # Fiyatı, ürünün fiyatı ile çarp
-        super().save(*args, **kwargs)
+   # Sepet öğesi kaydedildiğinde ürün fiyatını güncelle
+def save(self, *args, **kwargs):
+    if self.product.price is None:
+        raise ValueError("Ürün fiyatı tanımlı değil.")  # Ürün fiyatı tanımsızsa hata verir
+    self.price = self.product.price * self.quantity  # Fiyatı, ürünün fiyatı ile çarp
+    super().save(*args, **kwargs)
