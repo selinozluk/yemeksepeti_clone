@@ -187,14 +187,13 @@ class DeleteOrderItem(graphene.Mutation):
 class CreateOrderItem(graphene.Mutation):
     class Arguments:
         order_id = graphene.ID(required=True)
-        product_name = graphene.String(required=True)
+        product_id = graphene.ID(required=True)  # Ürün ID'sini aldık
         quantity = graphene.Int(required=True)
-        price = graphene.Float(required=True)
 
     order_item = graphene.Field(OrderItemType)
 
     @roles_required("CUSTOMER", "STAFF")
-    def mutate(self, info, order_id, product_name, quantity, price):
+    def mutate(self, info, order_id, product_id, quantity):
         user = info.context.user
         if not user.is_authenticated:
             raise Exception("Giriş yapmalısınız.")
@@ -202,10 +201,20 @@ class CreateOrderItem(graphene.Mutation):
             order = Order.objects.get(pk=order_id, user=user)
         except Order.DoesNotExist:
             raise Exception("Sipariş bulunamadı.")
-        if not product_name or quantity <= 0 or price <= 0:
+
+        try:
+            product = MenuItem.objects.get(pk=product_id)  # Ürünü bulduk
+        except MenuItem.DoesNotExist:
+            raise Exception("Ürün bulunamadı.")
+
+        if quantity <= 0:
             raise Exception("Geçersiz ürün bilgileri.")
-        order_item = OrderItem.objects.create(order=order, product_name=product_name, quantity=quantity, price=price)
+
+        # Ürün fiyatını otomatik olarak MenuItem'dan al
+        order_item = OrderItem.objects.create(order=order, product_name=product.name, quantity=quantity, price=product.price)
         return CreateOrderItem(order_item=order_item)
+
+
 
 # Sepet öğesi güncelleme mutasyonu
 class UpdateCartItem(graphene.Mutation):
@@ -262,14 +271,18 @@ class AddCartItem(graphene.Mutation):
             raise Exception("Giriş yapmalısınız.")
         cart, created = Cart.objects.get_or_create(user=user)
         product = MenuItem.objects.get(id=product_id)
-        cart_item, item_created = CartItem.objects.get_or_create(cart=cart, product=product)
+        cart_item, item_created = CartItem.objects.get_or_create(cart=cart, product=product, defaults={"quantity":quantity})
         
         if not item_created:
             cart_item.quantity += quantity
-        else:
-            cart_item.quantity = quantity
+
+        # Ürün fiyatını hesapla ve kaydet
+        cart_item.price = product.price * cart_item.quantity  
         cart_item.save()
+        
         return AddCartItem(cart_item=cart_item)
+
+    
 
 # Mutation sınıfı
 class Mutation(graphene.ObjectType):
