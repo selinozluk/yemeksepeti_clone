@@ -1,5 +1,3 @@
-# users/forms.py
-
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import User
@@ -7,6 +5,7 @@ from .models import User
 class UserRegistrationForm(UserCreationForm):
     first_name = forms.CharField(max_length=255, label='Ad')
     last_name = forms.CharField(max_length=255, label='Soyad')
+    phone_number = forms.CharField(max_length=15, label='Telefon Numarası')
     birth_date = forms.DateField(
         label='Doğum Tarihi', 
         required=False, 
@@ -33,7 +32,7 @@ class UserRegistrationForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'birth_date', 'email', 'password1', 'password2']
+        fields = ['first_name', 'last_name', 'birth_date', 'email', 'phone_number', 'password1', 'password2']
 
     def clean_password1(self):
         password = self.cleaned_data.get('password1')
@@ -48,3 +47,8 @@ class UserRegistrationForm(UserCreationForm):
         if not any(char in '!@#$%^&*()-_=+' for char in password):
             raise forms.ValidationError('Şifre en az bir özel karakter içermelidir (!@#$%^&*()-_=+).')
         return password
+
+# Şifre sıfırlama formu dışarıda tanımlandı
+class PasswordResetForm(forms.Form):
+    email = forms.EmailField(label="Email")
+    phone_number = forms.CharField(max_length=15, label="Telefon Numarası")
