@@ -27,6 +27,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     firstName = models.CharField(max_length=30)
     lastName = models.CharField(max_length=30)
     birthDate = models.DateField(null=True, blank=True)  # Doğum tarihi eklendi
+    phone_number = models.CharField(max_length=15, blank=True, null=True)  # Telefon numarası eklendi
     isAdmin = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
