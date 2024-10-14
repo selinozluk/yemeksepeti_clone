@@ -9,7 +9,7 @@ from django.conf import settings
 class UserType(DjangoObjectType):
     class Meta:
         model = User
-        fields = ("id", "firstName", "lastName", "email", "birthDate", "isAdmin", "is_customer")
+        fields = ("id", "firstName", "lastName", "email", "birthDate", "isAdmin", "is_customer", "phone_number") # phone_number eklendi
 
 # Sorgular
 class Query(graphene.ObjectType):
