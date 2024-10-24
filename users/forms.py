@@ -5,7 +5,7 @@ from .models import User
 class UserRegistrationForm(UserCreationForm):
     first_name = forms.CharField(max_length=255, label='Ad')
     last_name = forms.CharField(max_length=255, label='Soyad')
-    phone_number = forms.CharField(max_length=15, label='Telefon Numarası')
+    phone_number = forms.CharField(max_length=15, label='Telefon Numarası')  # Telefon numarası zorunlu hale getirildi
     birth_date = forms.DateField(
         label='Doğum Tarihi', 
         required=False, 
@@ -48,7 +48,27 @@ class UserRegistrationForm(UserCreationForm):
             raise forms.ValidationError('Şifre en az bir özel karakter içermelidir (!@#$%^&*()-_=+).')
         return password
 
+
 # Şifre sıfırlama formu dışarıda tanımlandı
 class PasswordResetForm(forms.Form):
-    email = forms.EmailField(label="Email")
-    phone_number = forms.CharField(max_length=15, label="Telefon Numarası")
+    email = forms.EmailField(label="Email", required=False)  # Email zorunlu değil
+    phone_number = forms.CharField(max_length=15, label="Telefon Numarası", required=False)  # Telefon numarası zorunlu değil
+    contact_method = forms.ChoiceField(
+        choices=[('email', 'E-posta ile sıfırla'), ('phone', 'Telefon ile sıfırla')], 
+        widget=forms.RadioSelect, 
+        label="Şifre sıfırlama yöntemi"  # Kullanıcı şifre sıfırlama yöntemini seçebilecek
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        phone_number = cleaned_data.get('phone_number')
+        contact_method = cleaned_data.get('contact_method')
+
+        # Eğer kullanıcı email seçmişse email alanı zorunlu, telefon seçmişse telefon alanı zorunlu
+        if contact_method == 'email' and not email:
+            raise forms.ValidationError('E-posta ile sıfırlama için e-posta adresinizi girmeniz gerekiyor.')
+        if contact_method == 'phone' and not phone_number:
+            raise forms.ValidationError('Telefon ile sıfırlama için telefon numaranızı girmeniz gerekiyor.')
+
+        return cleaned_data
