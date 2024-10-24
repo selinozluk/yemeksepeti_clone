@@ -36,7 +36,7 @@ STORAGES = {
     },
     'staticfiles': {
         'BACKEND': 'storages.backends.s3.S3Storage',
-        }
+    }
 }
 
 # Fernet anahtarı
