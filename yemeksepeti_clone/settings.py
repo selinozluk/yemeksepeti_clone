@@ -23,9 +23,9 @@ DEBUG = True
 ALLOWED_HOSTS = ['35.169.62.192', '10.0.0.25', 'localhost', '127.0.0.1']  
 
 # AWS S3 ayarları
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = 'yemeksepeti-clone-media'
+AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')
 AWS_S3_REGION_NAME = 'us-east-1'  # Bucket bölgesi
 AWS_S3_FILE_OVERWRITE = True  # Aynı dosya isimleriyle yükleme yaparken üzerine yazmayı sağlar
 AWS_QUERYSTRING_AUTH = False  # İsteğe bağlı, URL'de imza olmadan dosya erişimi sağlar
@@ -38,6 +38,9 @@ STORAGES = {
         'BACKEND': 'storages.backends.s3.S3Storage',
         }
 }
+
+# Fernet anahtarı
+FERNET_KEY = env('FERNET_KEY')
 
 # Application definition
 
