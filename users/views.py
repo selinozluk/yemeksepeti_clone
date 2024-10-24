@@ -25,7 +25,7 @@ def register(request):
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            # Formdan alınan verileri kullanıcı modeline ekleyin
+            # Formdan alınan veriler kullanıcı modeline eklendi
             user.firstName = form.cleaned_data['first_name']
             user.lastName = form.cleaned_data['last_name']
             user.birthDate = form.cleaned_data['birth_date']
