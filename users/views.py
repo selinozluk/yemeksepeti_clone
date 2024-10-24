@@ -45,16 +45,21 @@ def register(request):
 
 def password_reset(request):
     if request.method == 'POST':
+        print("POST verileri:", request.POST)  # POST verilerini terminale yazdır
         form = PasswordResetForm(request.POST)
+        
         if form.is_valid():
             method = request.POST.get('method')
             email = form.cleaned_data.get('email')
             phone_number = form.cleaned_data.get('phone_number')
+            print("Email:", email)
+            print("Phone:", phone_number)
 
             if method == 'email' and email:
                 user = User.objects.filter(email=email).first()
                 if user:
                     token = cipher_suite.encrypt(user.email.encode())
+                    print("Oluşturulan E-posta Token:", token.decode())  # Token'ı yazdır
                     send_mail(
                         'Şifre Sıfırlama Talebi',
                         f'Sıfırlama için bu linki kullanın: {request.build_absolute_uri()}?token={token.decode()}',
@@ -62,18 +67,15 @@ def password_reset(request):
                         [user.email],
                     )
                     return render(request, 'users/password_reset_done.html', {'message': 'E-posta adresinize bir sıfırlama kodu gönderildi.'})
-                else:
-                    form.add_error('email', 'Bu e-posta adresi ile kayıtlı bir kullanıcı bulunamadı.')
 
             elif method == 'phone' and phone_number:
                 user = User.objects.filter(phone_number=phone_number).first()
                 if user:
                     token = cipher_suite.encrypt(user.phone_number.encode())
+                    print("Oluşturulan Telefon Token:", token.decode())  # Token'ı yazdır
                     return render(request, 'users/password_reset_done.html', {'message': f'Telefon numaranıza bir sıfırlama kodu gönderildi: {token.decode()}'})
-                else:
-                    form.add_error('phone_number', 'Bu telefon numarası ile kayıtlı bir kullanıcı bulunamadı.')
-            else:
-                form.add_error(None, 'Lütfen geçerli bir e-posta adresi veya telefon numarası girin.')
+        else:
+            print("Form Hataları:", form.errors)  # Form hatalarını terminalde yazdır
     else:
         form = PasswordResetForm()
 
