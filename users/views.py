@@ -49,33 +49,50 @@ def password_reset(request):
         form = PasswordResetForm(request.POST)
         
         if form.is_valid():
-            method = request.POST.get('method')
+            contact_method = form.cleaned_data.get('contact_method')  # Kullanıcının seçtiği yöntem (e-posta veya telefon)
             email = form.cleaned_data.get('email')
             phone_number = form.cleaned_data.get('phone_number')
             print("Email:", email)
             print("Phone:", phone_number)
 
-            if method == 'email' and email:
+            # Kullanıcı e-posta ile sıfırlama seçtiyse
+            if contact_method == 'email':
                 user = User.objects.filter(email=email).first()
                 if user:
-                    token = cipher_suite.encrypt(user.email.encode())
-                    print("Oluşturulan E-posta Token:", token.decode())  # Token'ı yazdır
-                    send_mail(
-                        'Şifre Sıfırlama Talebi',
-                        f'Sıfırlama için bu linki kullanın: {request.build_absolute_uri()}?token={token.decode()}',
-                        'no-reply@yemeksepeti_clone.com',
-                        [user.email],
-                    )
-                    return render(request, 'users/password_reset_done.html', {'message': 'E-posta adresinize bir sıfırlama kodu gönderildi.'})
+                    # Eğer telefon numarası da doldurulmuşsa ve uyuşmuyorsa hata ekle
+                    if phone_number and user.phone_number != phone_number:
+                        form.add_error('phone_number', 'Girdiğiniz telefon numarası bu e-posta adresiyle uyuşmuyor.')
+                    else:
+                        # Doğrulama başarılı, e-posta için token oluştur ve gönder
+                        token = cipher_suite.encrypt(user.email.encode())
+                        print("Oluşturulan E-posta Token:", token.decode())  # Token'ı yazdır
+                        send_mail(
+                            'Şifre Sıfırlama Talebi',
+                            f'Sıfırlama için bu linki kullanın: {request.build_absolute_uri()}?token={token.decode()}',
+                            'no-reply@yemeksepeti_clone.com',
+                            [user.email],
+                        )
+                        return render(request, 'users/password_reset_done.html', {'message': 'E-posta adresinize bir sıfırlama kodu gönderildi.'})
+                else:
+                    form.add_error('email', 'Bu e-posta adresi ile kayıtlı bir kullanıcı bulunamadı.')
 
-            elif method == 'phone' and phone_number:
+            # Kullanıcı telefon numarası ile sıfırlama seçtiyse
+            elif contact_method == 'phone':
                 user = User.objects.filter(phone_number=phone_number).first()
                 if user:
-                    token = cipher_suite.encrypt(user.phone_number.encode())
-                    print("Oluşturulan Telefon Token:", token.decode())  # Token'ı yazdır
-                    return render(request, 'users/password_reset_done.html', {'message': f'Telefon numaranıza bir sıfırlama kodu gönderildi: {token.decode()}'})
-        else:
-            print("Form Hataları:", form.errors)  # Form hatalarını terminalde yazdır
+                    # Eğer e-posta adresi de doldurulmuşsa ve uyuşmuyorsa hata ekle
+                    if email and user.email != email:
+                        form.add_error('email', 'Girdiğiniz e-posta adresi bu telefon numarasıyla uyuşmuyor.')
+                    else:
+                        # Doğrulama başarılı, telefon için token oluştur
+                        token = cipher_suite.encrypt(user.phone_number.encode())
+                        print("Oluşturulan Telefon Token:", token.decode())  # Token'ı yazdır
+                        return render(request, 'users/password_reset_done.html', {'message': f'Telefon numaranıza bir sıfırlama kodu gönderildi: {token.decode()}'})
+                else:
+                    form.add_error('phone_number', 'Bu telefon numarası ile kayıtlı bir kullanıcı bulunamadı.')
+
+        # Form geçerli değilse form hatalarını yazdır
+        print("Form Hataları:", form.errors)
     else:
         form = PasswordResetForm()
 
